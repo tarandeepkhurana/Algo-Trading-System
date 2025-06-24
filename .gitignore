@@ -1,3 +1,10 @@
+trading_env/
+models/
+mlruns/
+logs/
+data/
+artifacts/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
