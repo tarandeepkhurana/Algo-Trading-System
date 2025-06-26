@@ -8,3 +8,6 @@ lightgbm
 yfinance
 mlflow
 ta
+gspread
+oauth2client
+dotenv

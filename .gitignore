@@ -1,9 +1,12 @@
 trading_env/
 models/
 mlruns/
+mlruns_5001/
 logs/
 data/
 artifacts/
+mlartifacts/
+google-sheets-key.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

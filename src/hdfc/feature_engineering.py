@@ -5,7 +5,7 @@ import ta
 import numpy as np
 
 #Ensures logs directory exists
-log_dir = 'logs/reliance' 
+log_dir = 'logs/hdfc' 
 os.makedirs(log_dir, exist_ok=True)
 
 logger = logging.getLogger('feature_engineering')
@@ -30,7 +30,7 @@ def new_features() -> None:
     Create new features for training the ml models.
     """
     try:
-        file_path = "data/raw/reliance/stock_data.csv"
+        file_path = "data/raw/hdfc/stock_data.csv"
         df = pd.read_csv(file_path)
         logger.debug("Data loaded from: %s", file_path)
         
@@ -66,8 +66,10 @@ def new_features() -> None:
         bb = ta.volatility.BollingerBands(close=close_series)
         df['BB_Width'] = bb.bollinger_hband() - bb.bollinger_lband()
         
-        df['Return_2D'] = df['Close'].pct_change(2) #Comparing to 2 days back
-        df['Return_3D'] = df['Close'].pct_change(3) #Comparing to 3 days back
+        #Price Momentum
+        df['Price_Momentum'] = df['Close'] - df['MA20']
+        
+        df['MA_Diff'] = df['MA20'] - df['MA50']
 
         # First: convert 'Close' column to a plain NumPy array
         close_values = df['Close'].values.flatten()
@@ -93,13 +95,13 @@ def new_features() -> None:
         # Select only final columns to keep
         final_features = [
             'RSI', 'MACD', 'MACD_Signal', 'MA10', 'MA20', 'MA50',
-            'Volume', 'Volume_Change_Pct', 'Daily_Return_Pct', 'BB_Width', 
-            'Return_2D', 'Return_3D', 'Target'
+            'Volume', 'Volume_Change_Pct', 'Daily_Return_Pct', 'BB_Width',
+             'Price_Momentum', 'MA_Diff', 'Target'
         ]
 
         final_df = df[final_features]
 
-        data_dir = "data/feature_engineered/reliance"
+        data_dir = "data/feature_engineered/hdfc"
         os.makedirs(data_dir, exist_ok=True)
         file_path = os.path.join(data_dir, "transformed_stock_data.csv")
         final_df.to_csv(file_path, index=False)

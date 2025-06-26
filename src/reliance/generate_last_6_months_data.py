@@ -1,6 +1,6 @@
-import pandas as pd
-import logging
 import os
+import logging
+import pandas as pd
 import ta
 import numpy as np
 
@@ -8,13 +8,13 @@ import numpy as np
 log_dir = 'logs/reliance' 
 os.makedirs(log_dir, exist_ok=True)
 
-logger = logging.getLogger('feature_engineering')
+logger = logging.getLogger('generate_last_6_months_data')
 logger.setLevel("DEBUG")
 
 console_handler = logging.StreamHandler()
 console_handler.setLevel("DEBUG")
 
-file_path = os.path.join(log_dir, 'feature_engineering.log')
+file_path = os.path.join(log_dir, 'generate_last_6_months_data.log')
 file_handler = logging.FileHandler(file_path)
 file_handler.setLevel("DEBUG")
 
@@ -25,9 +25,10 @@ file_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 logger.addHandler(file_handler)
 
-def new_features() -> None:
+
+def generate_features():
     """
-    Create new features for training the ml models.
+    Generates last 6 months transformed data for RELIANCE stocks.
     """
     try:
         file_path = "data/raw/reliance/stock_data.csv"
@@ -66,47 +67,24 @@ def new_features() -> None:
         bb = ta.volatility.BollingerBands(close=close_series)
         df['BB_Width'] = bb.bollinger_hband() - bb.bollinger_lband()
         
-        df['Return_2D'] = df['Close'].pct_change(2) #Comparing to 2 days back
-        df['Return_3D'] = df['Close'].pct_change(3) #Comparing to 3 days back
-
-        # First: convert 'Close' column to a plain NumPy array
-        close_values = df['Close'].values.flatten()
-
-        # Create Next_Close using NumPy (this avoids all Pandas index issues)
-        next_close_values = np.roll(close_values, -1)
-
-        # Now calculate the target
-        target_values = (next_close_values > close_values).astype(int)
-
-        # Set the last target to NaN or drop it later (since it compares to garbage)
-        target_values = (next_close_values > close_values).astype(float) 
-        target_values[-1] = np.nan
-
-        # Assign back to DataFrame
-        df['Target'] = target_values
-
         # Drop rows with NaNs due to indicators or shifting
         df.dropna(inplace=True)
 
-        df['Target'] = df['Target'].astype(int)
-
-        # Select only final columns to keep
         final_features = [
-            'RSI', 'MACD', 'MACD_Signal', 'MA10', 'MA20', 'MA50',
-            'Volume', 'Volume_Change_Pct', 'Daily_Return_Pct', 'BB_Width', 
-            'Return_2D', 'Return_3D', 'Target'
+            'Date', 'Close', 'RSI', 'MACD', 'MACD_Signal', 'MA10', 'MA20', 'MA50',
+            'Volume', 'Volume_Change_Pct', 'Daily_Return_Pct', 'BB_Width'
         ]
 
-        final_df = df[final_features]
+        final_df = df[final_features].tail(126)
 
-        data_dir = "data/feature_engineered/reliance"
-        os.makedirs(data_dir, exist_ok=True)
-        file_path = os.path.join(data_dir, "transformed_stock_data.csv")
-        final_df.to_csv(file_path, index=False)
-        logger.debug("Data loaded properly to transformed_stock_data.csv")
+        file_path = "data/last_6_months_data/reliance"
+        os.makedirs(file_path, exist_ok=True)
+        final_df.to_csv(os.path.join(file_path, "reliance_features_6_months.csv"), index=False)
+        logger.debug("Last 6 months transformed data generated successfully.")
+
     except Exception as e:
-        logger.error("Error occurred while creating new features: %s", e)
+        logger.error("Error occurred while generating last 6 months features: %s", e)
         raise
 
 if __name__ == "__main__":
-    new_features()
+    generate_features()
